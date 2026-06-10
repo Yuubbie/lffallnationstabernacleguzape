@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LFF ANT — Admin Dashboard</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'DM Sans',sans-serif; background:#f4f6f9; color:#1a1a1a; }
+
+/* LOGIN */
+.login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#003318,#005028); padding:20px; }
+.login-card { background:white; border-radius:16px; padding:48px 40px; width:100%; max-width:400px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.login-logo { font-size:3rem; margin-bottom:16px; }
+.login-card h2 { font-family:'Playfair Display',serif; font-size:1.5rem; color:#003318; margin-bottom:6px; }
+.login-card p { color:#666; font-size:0.85rem; margin-bottom:28px; }
+.login-field { margin-bottom:14px; text-align:left; }
+.login-field label { display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:#444; margin-bottom:5px; font-weight:600; }
+.login-field input { width:100%; padding:12px 14px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; outline:none; transition:border-color 0.2s; font-family:'DM Sans',sans-serif; }
+.login-field input:focus { border-color:#00A050; }
+.login-btn { width:100%; background:#00A050; color:white; padding:13px; border:none; border-radius:6px; font-weight:700; font-size:0.9rem; cursor:pointer; margin-top:8px; font-family:'DM Sans',sans-serif; transition:background 0.2s; }
+.login-btn:hover { background:#005028; }
+.login-error { background:rgba(200,0,0,0.08); color:#8b0000; border:1px solid rgba(200,0,0,0.2); border-radius:5px; padding:10px 14px; font-size:0.82rem; margin-bottom:14px; display:none; }
+
+/* DASHBOARD */
+.dashboard { display:none; }
+.topbar { background:#003318; color:white; padding:0 24px; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,0.2); }
+.topbar-left { display:flex; align-items:center; gap:14px; }
+.topbar-logo { font-size:1.6rem; }
+.topbar h1 { font-family:'Playfair Display',serif; font-size:1.1rem; }
+.topbar small { display:block; color:rgba(255,255,255,0.5); font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; }
+.topbar-right { display:flex; align-items:center; gap:16px; }
+.topbar-time { color:rgba(255,255,255,0.6); font-size:0.78rem; }
+.logout-btn { background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2); padding:7px 16px; border-radius:5px; cursor:pointer; font-size:0.8rem; font-family:'DM Sans',sans-serif; transition:background 0.2s; }
+.logout-btn:hover { background:rgba(255,255,255,0.2); }
+
+/* LAYOUT */
+.dash-body { display:grid; grid-template-columns:220px 1fr; min-height:calc(100vh - 64px); }
+.sidebar { background:#fff; border-right:1px solid #e8e8e8; padding:24px 0; }
+.sidebar-section { padding:0 16px; margin-bottom:8px; }
+.sidebar-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:#999; font-weight:600; padding:0 12px; margin-bottom:6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:7px; cursor:pointer; font-size:0.875rem; color:#444; transition:all 0.2s; margin-bottom:2px; }
+.nav-item:hover { background:#f0f8f4; color:#003318; }
+.nav-item.active { background:#e8f5ee; color:#003318; font-weight:600; }
+.nav-item .nav-icon { font-size:1rem; width:20px; text-align:center; }
+.nav-badge { margin-left:auto; background:#e74c3c; color:white; font-size:0.65rem; font-weight:700; padding:2px 7px; border-radius:10px; min-width:20px; text-align:center; }
+.nav-badge.green { background:#00A050; }
+
+/* MAIN */
+.main { padding:28px; overflow-y:auto; }
+.page { display:none; }
+.page.active { display:block; }
+
+/* STATS CARDS */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+.stat-card { background:white; border-radius:10px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border-left:4px solid; }
+.stat-card.green { border-color:#00A050; }
+.stat-card.blue { border-color:#2980b9; }
+.stat-card.gold { border-color:#C8801E; }
+.stat-card.purple { border-color:#8e44ad; }
+.stat-card h3 { font-size:1.8rem; font-weight:700; margin-bottom:4px; }
+.stat-card p { font-size:0.75rem; color:#888; text-transform:uppercase; letter-spacing:1px; }
+.stat-card .trend { font-size:0.72rem; color:#00A050; margin-top:4px; }
+
+/* TABLE */
+.section-card { background:white; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:24px; }
+.card-header { padding:18px 22px; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; justify-content:space-between; }
+.card-header h3 { font-size:1rem; font-weight:600; color:#1a1a1a; }
+.card-header span { font-size:0.78rem; color:#888; }
+.card-header-right { display:flex; align-items:center; gap:10px; }
+.refresh-btn { background:#f0f8f4; color:#00A050; border:1px solid #c8e6d4; padding:6px 14px; border-radius:5px; font-size:0.75rem; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; transition:all 0.2s; }
+.refresh-btn:hover { background:#00A050; color:white; }
+.export-btn { background:#003318; color:white; border:none; padding:6px 14px; border-radius:5px; font-size:0.75rem; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+th { background:#f8f9fa; padding:11px 16px; text-align:left; font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600; border-bottom:1px solid #eee; }
+td { padding:12px 16px; font-size:0.85rem; border-bottom:1px solid #f5f5f5; color:#333; vertical-align:top; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#fafffe; }
+.badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:700; letter-spacing:0.5px; }
+.badge.new { background:#e8f5ee; color:#005028; }
+.badge.read { background:#f0f0f0; color:#666; }
+.badge.urgent { background:#fde8e8; color:#8b0000; }
+.badge.prayed { background:#e8f5ee; color:#005028; }
+.badge.pending { background:#fff3cd; color:#856404; }
+.badge.confirmed { background:#e8f5ee; color:#005028; }
+.action-btn { background:none; border:1px solid #ddd; color:#555; padding:4px 10px; border-radius:4px; font-size:0.72rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; margin-right:4px; }
+.action-btn:hover { background:#003318; color:white; border-color:#003318; }
+.empty-state { text-align:center; padding:48px 20px; color:#aaa; }
+.empty-state div { font-size:2.5rem; margin-bottom:12px; }
+.empty-state p { font-size:0.875rem; }
+.loading-state { text-align:center; padding:32px; color:#aaa; font-size:0.875rem; }
+.search-input { padding:8px 12px; border:1px solid #ddd; border-radius:5px; font-size:0.82rem; outline:none; font-family:'DM Sans',sans-serif; width:200px; }
+.search-input:focus { border-color:#00A050; }
+
+/* OVERVIEW RECENT */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+/* MOBILE */
+@media(max-width:768px) {
+  .dash-body { grid-template-columns:1fr; }
+  .sidebar { display:none; }
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .two-col { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">&#9962;</div>
+    <h2>Admin Dashboard</h2>
+    <p>Living Faith Foundation &mdash; All Nations Tabernacle</p>
+    <div class="login-error" id="loginError">Incorrect password. Please try again.</div>
+    <div class="login-field">
+      <label>Email Address</label>
+      <input type="email" id="adminUser" placeholder="Enter your email" autocomplete="off">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="adminPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doFirebaseLogin()">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doFirebaseLogin()">Sign In &rarr;</button>
+    <p style="font-size:0.72rem;color:#aaa;margin-top:16px;">&#128274; Restricted access. Authorised personnel only.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboardScreen">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">&#9962;</div>
+      <div>
+        <h1>LFF Admin Dashboard</h1>
+        <small>All Nations Tabernacle, Guzape Abuja</small>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-time" id="liveTime"></span>
+      <span style="color:rgba(255,255,255,0.6);font-size:0.78rem;margin-right:8px;" id="adminUserDisplay"></span>
+      <button class="logout-btn" onclick="doFirebaseLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Main</div>
+        <div class="nav-item active" onclick="showPage('overview')">
+          <span class="nav-icon">&#128200;</span> Overview
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Submissions</div>
+        <div class="nav-item" onclick="showPage('contacts')">
+          <span class="nav-icon">&#9993;</span> Contact Messages
+          <span class="nav-badge" id="badge-contacts">0</span>
+        </div>
+        <div class="nav-item" onclick="showPage('prayers')">
+          <span class="nav-icon">&#128591;</span> Prayer Requests
+          <span class="nav-badge" id="badge-prayers">0</span>
+        </div>
+        <div class="nav-item" onclick="showPage('giving')">
+          <span class="nav-icon">&#128176;</span> Giving Records
+          <span class="nav-badge green" id="badge-giving">0</span>
+        </div>
+        <div class="nav-item" onclick="showPage('visitors')">
+          <span class="nav-icon">&#128075;</span> Visitor Registrations
+          <span class="nav-badge" id="badge-visitors">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+
+      <!-- OVERVIEW PAGE -->
+      <div class="page active" id="page-overview">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:6px;">Good day, Administrator</h2>
+        <p style="color:#888;font-size:0.85rem;margin-bottom:24px;">Here is a summary of all church submissions.</p>
+        <div class="stats-row">
+          <div class="stat-card green">
+            <h3 id="ov-contacts">-</h3>
+            <p>Contact Messages</p>
+            <div class="trend" id="ov-contacts-new"></div>
+          </div>
+          <div class="stat-card blue">
+            <h3 id="ov-prayers">-</h3>
+            <p>Prayer Requests</p>
+            <div class="trend" id="ov-prayers-new"></div>
+          </div>
+          <div class="stat-card gold">
+            <h3 id="ov-giving">-</h3>
+            <p>Giving Records</p>
+            <div class="trend" id="ov-giving-amt"></div>
+          </div>
+          <div class="stat-card purple">
+            <h3 id="ov-visitors">-</h3>
+            <p>Visitor Registrations</p>
+            <div class="trend" id="ov-visitors-new"></div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="section-card">
+            <div class="card-header"><h3>&#128680; Urgent Prayer Requests</h3></div>
+            <div id="urgent-list" class="loading-state">Loading...</div>
+          </div>
+          <div class="section-card">
+            <div class="card-header"><h3>&#128075; Recent Visitors</h3></div>
+            <div id="recent-visitors" class="loading-state">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACT MESSAGES PAGE -->
+      <div class="page" id="page-contacts">
+        <div class="section-card">
+          <div class="card-header">
+            <h3>&#9993; Contact Messages</h3>
+            <div class="card-header-right">
+              <input class="search-input" placeholder="Search..." oninput="filterTable('contacts-table', this.value)">
+              <button class="refresh-btn" onclick="loadContacts()">&#8635; Refresh</button>
+              <button class="export-btn" onclick="exportCSV('contacts-table','contact_messages')">&#8615; Export</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="contacts-table">
+              <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="contacts-body"><tr><td colspan="7" class="loading-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRAYER REQUESTS PAGE -->
+      <div class="page" id="page-prayers">
+        <div class="section-card">
+          <div class="card-header">
+            <h3>&#128591; Prayer Requests</h3>
+            <div class="card-header-right">
+              <input class="search-input" placeholder="Search..." oninput="filterTable('prayers-table', this.value)">
+              <button class="refresh-btn" onclick="loadPrayers()">&#8635; Refresh</button>
+              <button class="export-btn" onclick="exportCSV('prayers-table','prayer_requests')">&#8615; Export</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="prayers-table">
+              <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Request</th><th>Urgent</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="prayers-body"><tr><td colspan="7" class="loading-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- GIVING RECORDS PAGE -->
+      <div class="page" id="page-giving">
+        <div class="section-card">
+          <div class="card-header">
+            <h3>&#128176; Giving Records</h3>
+            <div class="card-header-right">
+              <input class="search-input" placeholder="Search..." oninput="filterTable('giving-table', this.value)">
+              <button class="refresh-btn" onclick="loadGiving()">&#8635; Refresh</button>
+              <button class="export-btn" onclick="exportCSV('giving-table','giving_records')">&#8615; Export</button>
+            </div>
+          </div>
+          <div id="giving-total" style="padding:14px 22px;background:#f0f8f4;border-bottom:1px solid #e0f0e8;font-size:0.875rem;color:#003318;font-weight:600;"></div>
+          <div class="table-wrap">
+            <table id="giving-table">
+              <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Amount (NGN)</th><th>Type</th><th>Reference</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="giving-body"><tr><td colspan="8" class="loading-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISITOR REGISTRATIONS PAGE -->
+      <div class="page" id="page-visitors">
+        <div class="section-card">
+          <div class="card-header">
+            <h3>&#128075; Visitor Registrations</h3>
+            <div class="card-header-right">
+              <input class="search-input" placeholder="Search..." oninput="filterTable('visitors-table', this.value)">
+              <button class="refresh-btn" onclick="loadVisitors()">&#8635; Refresh</button>
+              <button class="export-btn" onclick="exportCSV('visitors-table','visitor_registrations')">&#8615; Export</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="visitors-table">
+              <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Email</th><th>How They Heard</th><th>Notes</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="visitors-body"><tr><td colspan="8" class="loading-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end main -->
+  </div><!-- end dash-body -->
+</div><!-- end dashboard -->
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, updateDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD2AQtQV1n9xCDU4I1FsOrSkdlRrCePJsM",
+    authDomain: "lff-website-63f52.firebaseapp.com",
+    projectId: "lff-website-63f52",
+    storageBucket: "lff-website-63f52.firebasestorage.app",
+    messagingSenderId: "640226713555",
+    appId: "1:640226713555:web:789e92250f399eea181926"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
+
+  // ── AUTH STATE ────────────────────────────────────────────
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // User is signed in — show dashboard
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboardScreen').style.display = 'block';
+      document.getElementById('adminUserDisplay').textContent = user.email;
+      initDashboardData();
+    } else {
+      // Not signed in — show login
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('dashboardScreen').style.display = 'none';
+    }
+  });
+
+  // ── FIREBASE LOGIN ────────────────────────────────────────
+  window.doFirebaseLogin = async function() {
+    const email = document.getElementById('adminUser').value.trim();
+    const pass  = document.getElementById('adminPass').value;
+    const btn   = document.getElementById('loginBtn');
+    const err   = document.getElementById('loginError');
+
+    if (!email || !pass) {
+      err.textContent = 'Please enter your email and password.';
+      err.style.display = 'block';
+      return;
+    }
+
+    btn.textContent = 'Signing in...';
+    btn.disabled = true;
+    err.style.display = 'none';
+
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      // onAuthStateChanged handles the rest
+    } catch(e) {
+      err.textContent = 'Incorrect email or password. Please try again.';
+      err.style.display = 'block';
+      btn.textContent = 'Sign In →';
+      btn.disabled = false;
+    }
+  };
+
+  // ── FIREBASE LOGOUT ───────────────────────────────────────
+  window.doFirebaseLogout = async function() {
+    await signOut(auth);
+  };
+
+  function initDashboardData() {
+    updateClock();
+    setInterval(updateClock, 1000);
+    setTimeout(() => {
+      loadContacts();
+      loadPrayers();
+      loadGiving();
+      loadVisitors();
+    }, 300);
+  }
+
+  function fmtDate(ts) {
+    if (!ts) return '-';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+           d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function truncate(str, n=60) {
+    if (!str) return '-';
+    return str.length > n ? str.substring(0, n) + '...' : str;
+  }
+
+  async function fetchAll(col) {
+    const q = query(collection(db, col), orderBy('timestamp', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // ── CONTACTS ──────────────────────────────────────────────
+  window.loadContacts = async function() {
+    const tbody = document.getElementById('contacts-body');
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-state">Loading...</td></tr>';
+    try {
+      const data = await fetchAll('contact_messages');
+      document.getElementById('ov-contacts').textContent = data.length;
+      const unread = data.filter(d => !d.read).length;
+      document.getElementById('ov-contacts-new').textContent = unread + ' unread';
+      document.getElementById('badge-contacts').textContent = unread;
+
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div>&#9993;</div><p>No messages yet</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(r => `
+        <tr id="crow-${r.id}">
+          <td style="white-space:nowrap;font-size:0.78rem;color:#888">${fmtDate(r.timestamp)}</td>
+          <td><strong>${r.name||'-'}</strong></td>
+          <td><a href="mailto:${r.email}" style="color:#00A050">${r.email||'-'}</a></td>
+          <td>${r.subject||'-'}</td>
+          <td title="${r.message||''}">${truncate(r.message)}</td>
+          <td><span class="badge ${r.read?'read':'new'}">${r.read?'Read':'New'}</span></td>
+          <td>
+            <button class="action-btn" onclick="markContactRead('${r.id}')">&#10003; Mark Read</button>
+          </td>
+        </tr>`).join('');
+    } catch(e) {
+      tbody.innerHTML = '<tr><td colspan="7" style="color:red;padding:16px;">Error loading data. Check your internet connection.</td></tr>';
+    }
+  };
+
+  window.markContactRead = async function(id) {
+    await updateDoc(doc(db, 'contact_messages', id), { read: true });
+    loadContacts();
+  };
+
+  // ── PRAYERS ───────────────────────────────────────────────
+  window.loadPrayers = async function() {
+    const tbody = document.getElementById('prayers-body');
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-state">Loading...</td></tr>';
+    try {
+      const data = await fetchAll('prayer_requests');
+      document.getElementById('ov-prayers').textContent = data.length;
+      const unprayed = data.filter(d => !d.prayed).length;
+      document.getElementById('ov-prayers-new').textContent = unprayed + ' not prayed yet';
+      document.getElementById('badge-prayers').textContent = unprayed;
+
+      // Urgent list for overview
+      const urgent = data.filter(d => d.urgent && !d.prayed);
+      const urgentEl = document.getElementById('urgent-list');
+      if (urgent.length) {
+        urgentEl.innerHTML = urgent.map(r => `
+          <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;display:flex;align-items:flex-start;gap:10px;">
+            <span style="color:#e74c3c;font-size:1rem;margin-top:2px;">&#128680;</span>
+            <div>
+              <strong style="font-size:0.875rem">${r.name}</strong>
+              ${r.phone ? '<span style="color:#888;font-size:0.78rem;margin-left:8px">'+r.phone+'</span>' : ''}
+              <p style="color:#555;font-size:0.8rem;margin-top:3px;line-height:1.5">${truncate(r.request,80)}</p>
+            </div>
+          </div>`).join('');
+      } else {
+        urgentEl.innerHTML = '<div class="empty-state"><div>&#128591;</div><p>No urgent requests</p></div>';
+      }
+
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div>&#128591;</div><p>No prayer requests yet</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(r => `
+        <tr>
+          <td style="white-space:nowrap;font-size:0.78rem;color:#888">${fmtDate(r.timestamp)}</td>
+          <td><strong>${r.name||'-'}</strong></td>
+          <td>${r.phone ? '<a href="tel:'+r.phone+'" style="color:#00A050">'+r.phone+'</a>' : '-'}</td>
+          <td title="${r.request||''}">${truncate(r.request,80)}</td>
+          <td>${r.urgent ? '<span class="badge urgent">&#128680; Urgent</span>' : '<span class="badge read">Normal</span>'}</td>
+          <td><span class="badge ${r.prayed?'prayed':'pending'}">${r.prayed?'Prayed':'Pending'}</span></td>
+          <td><button class="action-btn" onclick="markPrayed('${r.id}')">&#128591; Mark Prayed</button></td>
+        </tr>`).join('');
+    } catch(e) {
+      tbody.innerHTML = '<tr><td colspan="7" style="color:red;padding:16px;">Error loading data.</td></tr>';
+    }
+  };
+
+  window.markPrayed = async function(id) {
+    await updateDoc(doc(db, 'prayer_requests', id), { prayed: true });
+    loadPrayers();
+  };
+
+  // ── GIVING ────────────────────────────────────────────────
+  window.loadGiving = async function() {
+    const tbody = document.getElementById('giving-body');
+    tbody.innerHTML = '<tr><td colspan="8" class="loading-state">Loading...</td></tr>';
+    try {
+      const data = await fetchAll('giving_records');
+      const total = data.reduce((sum, r) => sum + (Number(r.amount)||0), 0);
+      document.getElementById('ov-giving').textContent = data.length;
+      document.getElementById('ov-giving-amt').textContent = '&#8358;' + total.toLocaleString() + ' total recorded';
+      document.getElementById('badge-giving').textContent = data.filter(d=>!d.acknowledged).length;
+      document.getElementById('giving-total').innerHTML =
+        'Total Recorded Giving: <span style="color:#C8801E">&#8358;' + total.toLocaleString() + '</span> &nbsp;&bull;&nbsp; ' + data.length + ' records';
+
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div>&#128176;</div><p>No giving records yet</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(r => `
+        <tr>
+          <td style="white-space:nowrap;font-size:0.78rem;color:#888">${fmtDate(r.timestamp)}</td>
+          <td><strong>${r.name||'-'}</strong></td>
+          <td>${r.phone ? '<a href="tel:'+r.phone+'" style="color:#00A050">'+r.phone+'</a>' : '-'}</td>
+          <td style="font-weight:700;color:#003318">&#8358;${Number(r.amount||0).toLocaleString()}</td>
+          <td>${r.type||'-'}</td>
+          <td style="font-size:0.78rem;color:#888">${r.reference||'-'}</td>
+          <td><span class="badge ${r.acknowledged?'confirmed':'pending'}">${r.acknowledged?'Confirmed':'Pending'}</span></td>
+          <td><button class="action-btn" onclick="markGivingAck('${r.id}')">&#10003; Acknowledge</button></td>
+        </tr>`).join('');
+    } catch(e) {
+      tbody.innerHTML = '<tr><td colspan="8" style="color:red;padding:16px;">Error loading data.</td></tr>';
+    }
+  };
+
+  window.markGivingAck = async function(id) {
+    await updateDoc(doc(db, 'giving_records', id), { acknowledged: true });
+    loadGiving();
+  };
+
+  // ── VISITORS ──────────────────────────────────────────────
+  window.loadVisitors = async function() {
+    const tbody = document.getElementById('visitors-body');
+    tbody.innerHTML = '<tr><td colspan="8" class="loading-state">Loading...</td></tr>';
+    try {
+      const data = await fetchAll('visitor_registrations');
+      document.getElementById('ov-visitors').textContent = data.length;
+      const unfollowed = data.filter(d => !d.followedUp).length;
+      document.getElementById('ov-visitors-new').textContent = unfollowed + ' need followup';
+      document.getElementById('badge-visitors').textContent = unfollowed;
+
+      // Recent visitors for overview
+      const recentEl = document.getElementById('recent-visitors');
+      const recent = data.slice(0, 5);
+      if (recent.length) {
+        recentEl.innerHTML = recent.map(r => `
+          <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <strong style="font-size:0.875rem">${r.name}</strong>
+              <p style="color:#888;font-size:0.75rem;margin-top:2px">${r.phone||''} &bull; ${r.source||'Unknown source'}</p>
+            </div>
+            <span class="badge ${r.followedUp?'confirmed':'pending'}">${r.followedUp?'Done':'Followup'}</span>
+          </div>`).join('');
+      } else {
+        recentEl.innerHTML = '<div class="empty-state"><div>&#128075;</div><p>No visitors yet</p></div>';
+      }
+
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div>&#128075;</div><p>No visitor registrations yet</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(r => `
+        <tr>
+          <td style="white-space:nowrap;font-size:0.78rem;color:#888">${fmtDate(r.timestamp)}</td>
+          <td><strong>${r.name||'-'}</strong></td>
+          <td>${r.phone ? '<a href="tel:'+r.phone+'" style="color:#00A050">'+r.phone+'</a>' : '-'}</td>
+          <td>${r.email ? '<a href="mailto:'+r.email+'" style="color:#00A050">'+r.email+'</a>' : '-'}</td>
+          <td>${r.source||'-'}</td>
+          <td title="${r.notes||''}">${truncate(r.notes||'-',50)}</td>
+          <td><span class="badge ${r.followedUp?'confirmed':'pending'}">${r.followedUp?'Followed Up':'Pending'}</span></td>
+          <td><button class="action-btn" onclick="markFollowedUp('${r.id}')">&#128222; Mark Done</button></td>
+        </tr>`).join('');
+    } catch(e) {
+      tbody.innerHTML = '<tr><td colspan="8" style="color:red;padding:16px;">Error loading data.</td></tr>';
+    }
+  };
+
+  window.markFollowedUp = async function(id) {
+    await updateDoc(doc(db, 'visitor_registrations', id), { followedUp: true });
+    loadVisitors();
+  };
+
+  // Expose loaders globally for page navigation
+  window._loaders = { contacts: loadContacts, prayers: loadPrayers, giving: loadGiving, visitors: loadVisitors };
+</script>
+
+<script>
+  // Auth is handled by Firebase — see module script above
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('liveTime').textContent =
+      now.toLocaleDateString('en-GB', { weekday:'short', day:'2-digit', month:'short', year:'numeric' }) + '  ' +
+      now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  }
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (page !== 'overview' && window._loaders && window._loaders[page]) {
+      window._loaders[page]();
+    }
+  }
+
+  function filterTable(tableId, query) {
+    const rows = document.getElementById(tableId).querySelectorAll('tbody tr');
+    const q = query.toLowerCase();
+    rows.forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  function exportCSV(tableId, filename) {
+    const table = document.getElementById(tableId);
+    const rows = [...table.querySelectorAll('tr')];
+    const csv = rows.map(row =>
+      [...row.querySelectorAll('th,td')]
+        .map(cell => '"' + cell.textContent.trim().replace(/"/g,'""') + '"')
+        .join(',')
+    ).join('\n');
+    const blob = new Blob([csv], { type:'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename + '_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click();
+  }
+</script>
+
+</body>
+</html>
